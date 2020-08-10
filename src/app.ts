@@ -22,7 +22,7 @@ interface DragTarget {
     dragLeaveHandler(event: DragEvent) : void;
 }
 
-enum courseEnum {Active =' active', Finished = 'finished'}
+enum courseEnum {Active ='active', Finished = 'finished'}
 type courseType = courseEnum.Active | courseEnum.Finished;
 type Listener<T> = (listeners: T[]) => void;
 
@@ -65,7 +65,20 @@ class CourseState extends State<Course> {
 
     addCourse(course:Course){
         this.courses.push(course);
-        
+        this.updateListeners();
+    }
+
+    moveProject(id: string, newType: courseType){
+        const selectedCourse = this.courses.find(course => course.id === id);
+        if(selectedCourse && selectedCourse.type !== newType){
+            selectedCourse.type = newType;
+            this.updateListeners();
+        }
+   
+    }
+
+    updateListeners(){
+        // console.log(this.courses)
         for (const listener of this.listeners){
             listener([...this.courses])
         }
@@ -192,14 +205,13 @@ class SingleCourse extends Component<HTMLUListElement, HTMLDivElement>
 
     @BindThis
     dragStart(event: DragEvent){
-        console.log('drag start')
-        console.log(event)
+        event.dataTransfer!.setData('text/plain', this.course.id);
+        event.dataTransfer!.effectAllowed = 'move';
     }
 
     @BindThis
-    dragEnd(event: DragEvent){
-        console.log('drag end')
-        console.log(event)      
+    dragEnd(_: DragEvent){
+        console.log('drag end')   
     }
 
     constructor(course: Course, hostId: string){
@@ -224,7 +236,8 @@ class SingleCourse extends Component<HTMLUListElement, HTMLDivElement>
 }
 
 
-class CourseList extends Component<HTMLElement, HTMLDivElement> {
+class CourseList extends Component<HTMLElement, HTMLDivElement> 
+    implements DragTarget {
 
     private assignedCourses:Course[];
     private static instance: CourseList;
@@ -247,9 +260,33 @@ class CourseList extends Component<HTMLElement, HTMLDivElement> {
         else return this.instance
         
     }  
+
+    @BindThis
+    dragOverHandler(event: DragEvent){
+        if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain'){
+            event.preventDefault();
+            this.parentElement.querySelector('ul')!.classList.add('droppable');
+        }
+    };
+
+    @BindThis
+    dropHandler(event: DragEvent){
+        // console.log(event.dataTransfer!.getData('text/plain'));
+        const id = event.dataTransfer!.getData('text/plain');
+        state.moveProject(id, this.type);
+
+    };
+
+    @BindThis
+    dragLeaveHandler(_: DragEvent){
+        this.parentElement.querySelector('ul')!.classList.remove('droppable');
+    };
     
     configure(){
         state.addListener(this.updateCourses);
+        this.parentElement.addEventListener('dragover', this.dragOverHandler)
+        this.parentElement.addEventListener('dragleave', this.dragLeaveHandler)
+        this.parentElement.addEventListener('drop', this.dropHandler)
     }
 
     renderContent(){
@@ -264,16 +301,16 @@ class CourseList extends Component<HTMLElement, HTMLDivElement> {
         this.renderCourses()
     }
 
+    @BindThis
     private renderCourses(){
         const ul = this.parentElement.querySelector('ul')! as HTMLUListElement;
         ul.id=this.type;
         // const current = Array.from(this.parentElement.querySelectorAll('li'));
         ul.innerHTML = '';
-        for (const course of this.assignedCourses){
-            if (course.type !== this.type) return;
-            else {
+        console.log(this.type)
+        const filtered = this.assignedCourses.filter(course => course.type === this.type)
+        for (const course of filtered){
                 new SingleCourse(course, this.type)
-            }
         }
     }
 
