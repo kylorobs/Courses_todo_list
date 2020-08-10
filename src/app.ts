@@ -1,8 +1,7 @@
 // Code goes here!
 
-enum courseEnum {Active =' active', Finished = 'finished'}
-type courseType = courseEnum.Active | courseEnum.Finished;
 
+//INTERFACES & TYPES
 
 interface Course {
     title: string,
@@ -10,6 +9,76 @@ interface Course {
     people: number;
     id: string;
     type: courseType;
+}
+
+interface Dragable {
+    dragStart(event: DragEvent) : void;
+    dragEnd(event: DragEvent) : void;
+}
+
+interface DragTarget {
+    dragOverHandler(event: DragEvent) : void;
+    dropHandler(event: DragEvent) : void;
+    dragLeaveHandler(event: DragEvent) : void;
+}
+
+enum courseEnum {Active =' active', Finished = 'finished'}
+type courseType = courseEnum.Active | courseEnum.Finished;
+type Listener<T> = (listeners: T[]) => void;
+
+
+
+//DECORATORS
+
+function BindThis( _: any, _1 : string, descriptor: PropertyDescriptor){
+    const originalMethod = descriptor.value;
+    const newDescriptor: PropertyDescriptor = {
+        get(){
+            const boundMethod = originalMethod.bind(this);
+            return boundMethod   
+        }
+    }
+    return newDescriptor;
+}
+
+
+//CLASSES
+
+class State<T> {
+    protected listeners: Listener<T>[] = [];
+
+
+    addListener(listener: Listener<T>){
+        this.listeners.push(listener)
+    }
+}
+
+class CourseState extends State<Course> {
+
+    courses: Course[];
+    private static instance: CourseState;
+    
+    private constructor(){
+        super();
+        this.courses =[];
+    }
+
+    addCourse(course:Course){
+        this.courses.push(course);
+        
+        for (const listener of this.listeners){
+            listener([...this.courses])
+        }
+    }
+
+
+    static createInstance(){
+        if (!this.instance){
+            return new CourseState();
+        }
+        else return this.instance;
+    }
+
 }
 
 
@@ -29,119 +98,11 @@ class Course implements Course {
     }
 }
 
-class CourseState{
-
-    courses: Course[];
-    private listeners: Function[];
-    private static instance: CourseState;
-    
-    private constructor(){
-        this.courses =[];
-        this.listeners = [];
-    }
-
-    addCourse(course:Course){
-        this.courses.push(course);
-        
-        for (const listener of this.listeners){
-            listener([...this.courses])
-        }
-    }
-
-    addListener(listener: Function){
-        this.listeners.push(listener)
-    }
-
-    static createInstance(){
-        if (!this.instance){
-            return new CourseState();
-        }
-        else return this.instance;
-    }
-
-}
-
-const state = CourseState.createInstance();
-
-function BindThis( _: any, _1 : string, descriptor: PropertyDescriptor){
-    const originalMethod = descriptor.value;
-    const newDescriptor: PropertyDescriptor = {
-        get(){
-            const boundMethod = originalMethod.bind(this);
-            return boundMethod   
-        }
-    }
-    return newDescriptor;
-}
-
-class CourseForm {
-
-    private template: HTMLTemplateElement;
-    private host: HTMLDivElement;
-    private form: HTMLFormElement
-    private formSubmit: HTMLButtonElement;
-    private formTitle: HTMLInputElement;
-    private formDescription: HTMLInputElement;
-    private formPeople: HTMLInputElement;
-    public courses:Course[] = []
-
-    constructor(){
-        this.template = document.getElementById("project-input")! as HTMLTemplateElement;
-        this.host = document.getElementById('app')! as HTMLDivElement;
-        this.initialisePage()
-
-        this.form = this.host.firstElementChild! as HTMLFormElement;
-        this.form.id = 'user-input'
-        this.formSubmit = this.form.querySelector('button')! as HTMLButtonElement;
-
-        this.formTitle = this.form.querySelector('#title')! as HTMLInputElement
-        this.formDescription = this.form.querySelector('#description')! as HTMLInputElement
-        this.formPeople = this.form.querySelector('#people')! as HTMLInputElement
-
-        this.attachListeners();
-
-    }
-    
-    @BindThis
-    attachListeners(){
-        this.formSubmit.addEventListener('click', this.newCourse)
-    }
-
-    private initialisePage(){
-        const content = this.template.content.cloneNode(true);
-        this.host.appendChild(content);
-    }
-
-    private validate(){
-        let valid = true;
-        if (!valid || this.formTitle.value.length <= 0) valid = false;
-        else if (!valid ||  !this.formDescription || this.formDescription.value.length <=0) valid = false;
-        else if(!valid || !this.formPeople || +this.formPeople.value <= 0 ) valid = false;
-        return valid;
-    }
-
-    private clearInputs(){
-        this.formTitle.value = "";
-        this.formDescription.value = "";
-        this.formPeople.value = "";
-    }
-
-    @BindThis
-    private newCourse(e: Event){
-        e.preventDefault();
-        if (!this.validate()) alert('Invalid Input')
-        else {
-            const course = new Course(this.formTitle.value, this.formDescription.value, +this.formPeople.value);
-            state.addCourse(course);
-            this.clearInputs();
-        }
-    }
-}
 
 abstract class Component <T extends HTMLElement, U extends HTMLElement> {
     private template: HTMLTemplateElement;
-    private parentElement: T;
-    private host: U
+    parentElement: T;
+    host: U
 
     constructor(templateId: string, hostId: string, beforeEnd:boolean, assignId?:string){
         this.template = document.getElementById(templateId)! as HTMLTemplateElement;
@@ -161,57 +122,105 @@ abstract class Component <T extends HTMLElement, U extends HTMLElement> {
 
 }
 
+class CourseForm extends Component<HTMLFormElement, HTMLDivElement>{
 
-class SingleCourse{
-    private _name: string; 
-    private host: HTMLDivElement;
-    private static instance: SingleCourse;
-    private ulElement: HTMLUListElement;
+    private formSubmit: HTMLButtonElement;
+    private formTitle: HTMLInputElement;
+    private formDescription: HTMLInputElement;
+    private formPeople: HTMLInputElement;
 
-    private constructor(name: string){
-        console.log('running constructor')
-        this._name = name;
-        this.host = document.getElementById('app')! as HTMLDivElement;
-        this.ulElement = document.createElement('ul')! as HTMLUListElement;
-        state.addListener(this.updateName)
-        this.setupDOM();
+
+    constructor(){
+
+        super("project-input", "app", false, 'user-input')
+
+        this.formSubmit = this.parentElement.querySelector('button')! as HTMLButtonElement;
+        this.formTitle = this.parentElement.querySelector('#title')! as HTMLInputElement
+        this.formDescription = this.parentElement.querySelector('#description')! as HTMLInputElement
+        this.formPeople = this.parentElement.querySelector('#people')! as HTMLInputElement
+
+        this.configure();
+        this.renderContent();
+
+    }
+    
+    @BindThis
+    configure(){
+        this.formSubmit.addEventListener('click', this.newCourse)
+    }
+
+    private validate(){
+        let valid = true;
+        if (!valid || this.formTitle.value.length <= 0) valid = false;
+        else if (!valid ||  !this.formDescription || this.formDescription.value.length <=0) valid = false;
+        else if(!valid || !this.formPeople || +this.formPeople.value <= 0 ) valid = false;
+        return valid;
+    }
+
+    private clearInputs(){
+        this.formTitle.value = "";
+        this.formDescription.value = "";
+        this.formPeople.value = "";
+    }
+
+    renderContent():void{};
+
+    @BindThis
+    private newCourse(e: Event){
+        e.preventDefault();
+        if (!this.validate()) alert('Invalid Input')
+        else {
+            const course = new Course(this.formTitle.value, this.formDescription.value, +this.formPeople.value);
+            state.addCourse(course);
+            this.clearInputs();
+        }
+    }
+
+}
+
+
+
+class SingleCourse extends Component<HTMLUListElement, HTMLDivElement> 
+    implements Dragable {
+
+    private course: Course;
+
+    get people(){
+        let noun = this.course.people === 1? 'Person' : 'People'
+        return `${this.course.people} ${noun}`;
     }
 
     @BindThis
-    updateName(courses: Course[]){
-        console.log(courses)
-        console.log('Updating Name')
-        this.name = courses[courses.length -1].title;
-        this.renderName();
+    dragStart(event: DragEvent){
+        console.log('drag start')
+        console.log(event)
     }
 
-    renderName(){
-        let li = this.ulElement.querySelector('li')! as HTMLLIElement;
-        li.innerText = this.name;
+    @BindThis
+    dragEnd(event: DragEvent){
+        console.log('drag end')
+        console.log(event)      
     }
 
-    private set name(name: string){
-        this._name = name;
+    constructor(course: Course, hostId: string){
+        super('single-project', hostId, true, course.id)
+        this.course = course;
+
+        this.configure();
+        this.renderContent();
     }
 
-    private get name(){
-        return this._name;
+    configure(){
+        this.parentElement.addEventListener('dragstart', this.dragStart);
+        this.parentElement.addEventListener('dragend', this.dragEnd)
     }
 
-    private setupDOM(){
-        this.host.insertAdjacentElement('beforeend', this.ulElement);
-        console.log('setting up')
-        const li = document.createElement('li')! as HTMLLIElement;
-        this.ulElement.appendChild(li);
-        this.ulElement.id="single-course";
-        this.renderName();
+    renderContent(){
+        this.parentElement.querySelector('h3')!.innerText = this.course.title;
+        this.parentElement.querySelectorAll('p')![0]!.innerText = this.people;
+        this.parentElement.querySelectorAll('p')![1]!.innerText = this.course.description;
     }
 
-    static createInstance() : SingleCourse {
-        console.log('New Single Course Created')
-        if (this.instance) return this.instance;
-        else return this.instance = new SingleCourse(name);
-    }
 }
 
 
@@ -222,7 +231,7 @@ class CourseList extends Component<HTMLElement, HTMLDivElement> {
     private type: courseType;
 
     private constructor(type: courseType){
-        super("projects", "app", true, `${type}-projects`)
+        super("project-list", "app", true, `${type}-projects`)
         this.assignedCourses = state.courses;
         this.type = type;
         this.configure()
@@ -257,24 +266,22 @@ class CourseList extends Component<HTMLElement, HTMLDivElement> {
 
     private renderCourses(){
         const ul = this.parentElement.querySelector('ul')! as HTMLUListElement;
-        const current = Array.from(this.parentElement.querySelectorAll('li'));
+        ul.id=this.type;
+        // const current = Array.from(this.parentElement.querySelectorAll('li'));
+        ul.innerHTML = '';
         for (const course of this.assignedCourses){
             if (course.type !== this.type) return;
-            else if (+current.findIndex(li => li.dataset.courseid === course.id) === -1){
-                let li = document.createElement('li');
-                li.innerText = course.title;
-                li.dataset.courseid = course.id;
-                ul.appendChild(li)
+            else {
+                new SingleCourse(course, this.type)
             }
-            else console.log('Error')
         }
     }
 
 }
 
 
-const projectPage = new CourseForm();
-const single = SingleCourse.createInstance();
+const state = CourseState.createInstance();
+const form = new CourseForm();
 const active = CourseList.createInstance(courseEnum.Active);
 const finished = CourseList.createInstance(courseEnum.Finished);
 
