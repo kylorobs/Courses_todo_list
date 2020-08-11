@@ -6,8 +6,8 @@ import { courseEnum } from './models/course.js'
 
 
 export const state = CourseState.createInstance();
-new CourseForm();
 CourseList.createInstance(courseEnum.Active);
 CourseList.createInstance(courseEnum.Finished);
+new CourseForm();
 
 
