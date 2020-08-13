@@ -1,4 +1,4 @@
-import { CourseModel, courseType, courseEnum } from '../models/course.js';
+import { CourseModel, courseType, courseEnum } from '../models/course';
 
 export class Course implements CourseModel {
     title: string;

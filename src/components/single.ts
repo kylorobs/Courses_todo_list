@@ -1,7 +1,7 @@
-import { Component } from './base-component.js';
-import { BindThis } from '../decorators/bindthis.js';
-import { Course } from './course.js';
-import { Dragable } from '../models/drag.js';
+import { Component } from './base-component';
+import { BindThis } from '../decorators/bindthis';
+import { Course } from './course';
+import { Dragable } from '../models/drag';
 
 export class SingleCourse extends Component<HTMLUListElement, HTMLDivElement> 
     implements Dragable {

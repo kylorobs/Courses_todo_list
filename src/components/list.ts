@@ -1,10 +1,10 @@
-import { Component } from './base-component.js';
-import { BindThis } from '../decorators/bindthis.js';
-import { Course } from './course.js';
-import { state } from '../app.js';
-import { courseType } from '../models/course.js';
-import { DragTarget } from '../models/drag.js';
-import { SingleCourse } from './single.js';
+import { Component } from './base-component';
+import { BindThis } from '../decorators/bindthis';
+import { Course } from './course';
+import { state } from '../app';
+import { courseType } from '../models/course';
+import { DragTarget } from '../models/drag';
+import { SingleCourse } from './single';
 
 export class CourseList extends Component<HTMLElement, HTMLDivElement> 
     implements DragTarget {

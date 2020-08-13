@@ -1,7 +1,7 @@
-import { Component } from './base-component.js';
-import { BindThis } from '../decorators/bindthis.js';
-import { Course } from './course.js';
-import { state } from '../app.js';
+import { Component } from './base-component';
+import { BindThis } from '../decorators/bindthis';
+import { Course } from './course';
+import { state } from '../app';
 
 
 export class CourseForm extends Component<HTMLFormElement, HTMLDivElement>{
