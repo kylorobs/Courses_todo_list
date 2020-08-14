@@ -34,7 +34,6 @@ module.exports = {
         hash: false,
         title: 'base_template',
         filename: './index.html',
-        // Load a custom template (lodash by default)
         template: './src/temp.html'
       }),
       new MiniCssExtractPlugin(),
