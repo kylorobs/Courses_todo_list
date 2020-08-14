@@ -1,8 +1,9 @@
 
-import { CourseState } from './state/course.js'
-import { CourseForm } from './components/form.js';
-import { CourseList } from './components/list.js';
-import { courseEnum } from './models/course.js'
+import { CourseState } from './state/course'
+import { CourseForm } from './components/form';
+import { CourseList } from './components/list';
+import { courseEnum } from './models/course';
+import './styles/app.css';
 
 
 export const state = CourseState.createInstance();

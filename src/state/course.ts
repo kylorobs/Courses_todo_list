@@ -1,4 +1,4 @@
-import { State } from './state.js';
+import { State } from './state';
 import { courseType, CourseModel } from '../models/course';
 
 export class CourseState extends State<CourseModel> {
