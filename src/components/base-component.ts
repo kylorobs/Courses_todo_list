@@ -5,6 +5,7 @@ export abstract class Component <T extends HTMLElement, U extends HTMLElement> {
     host: U
 
     constructor(templateId: string, hostId: string, beforeEnd:boolean, assignId?:string){
+        console.log('Why Hello Uhtred')
         this.template = document.getElementById(templateId)! as HTMLTemplateElement;
         const imported =  document.importNode(this.template.content, true);
         this.parentElement = imported.firstElementChild! as T;
