@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "concurrently \"webpack-dev-server\" \"npm:type-check -- --watch\"",
+    "start": "webpack-dev-server",
     "build": "webpack --config webpack.config.prod.js"
   },
   "keywords": [
